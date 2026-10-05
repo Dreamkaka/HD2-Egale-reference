@@ -22,17 +22,38 @@ def pair(english, chinese):
 
 TITLE = pair('Eagle HUD Reference', '飞鹰参考')
 TOGGLES = (
-    ('Full Damage', '满伤内圈', 'Orange full-damage edge.', '橙色满伤边界。', 'no_inner', 80, 'inner'),
-    ('Damage Edge', '伤害外圈', 'Red damage edge. Smoke coverage uses this too.', '红色伤害边缘。烟雾覆盖也走这项。', 'no_outer', 81, 'outer'),
-    ('Shockwave', '冲击波圈', 'Pale blue stagger range.', '淡蓝色硬直范围。', 'no_shock', 82, 'shock'),
-    ('Draw Rings', '绘制边界', 'The rings themselves. Off can leave the cross and text.', '范围圈本身。关掉后十字和文字可以单独留下。', 'no_dots', 83, 'dots'),
-    ('Call Cross', '呼叫十字', 'Yellow cross on the call point.', '呼叫点上的黄色十字。', 'no_cross', 84, 'cross'),
-    ('Type and Range', '型号与距离', 'Type, CALL REF, and BASELINE meters.', '型号、CALL REF 和 BASELINE 米数。', 'no_labels', 85, 'labels'),
-    ('Squad Ranges (Experimental)', '队友范围（实验性）', 'Off hides a call owned by another avatar. A call with no comms owner still stops at 80 m.', '关掉后，通讯记录属于别人的不画。没有归属时仍按 80 米。', 'no_squad', 96, 'squad'),
+    ('Full Damage', '满伤内半径',
+     'Orange square dots. Full-damage edge.',
+     '橙色范围。代表满伤边界',
+     'no_inner', 80, 'inner'),
+    ('Damage Edge', '伤害外半径',
+     'Red square dots, damage edge. Eagle Smoke coverage uses this too.',
+     '红色范围，代表伤害边缘。注意，飞鹰烟雾的烟雾覆盖范围绘制也由此项控制。',
+     'no_outer', 81, 'outer'),
+    ('Shockwave', '冲击半径',
+     'Pale blue square dots. Possible stagger range.',
+     '淡蓝色范围。代表可能触发硬直的范围',
+     'no_shock', 82, 'shock'),
+    ('Draw Rings', '绘制边界',
+     'Draw the ranges turned on above. Off leaves the cross and text.',
+     '是否绘制范围，关掉后将不绘制范围，十字和文字可以单独留下。',
+     'no_dots', 83, 'dots'),
+    ('Call Cross', '呼叫十字',
+     'Yellow cross on the call point.',
+     '呼叫点上的黄色十字。',
+     'no_cross', 84, 'cross'),
+    ('Type and Range', '型号与距离注释',
+     'Whether to display annotations regarding the range size and lethality indicators.',
+     '是否显示范围大小和致死提示的相关注释。',
+     'no_labels', 85, 'labels'),
+    ('teammate range (experimental)', '是否显示队友信标范围（实验性）',
+     'Off hides a call whose comms owner is another avatar. A call with no comms owner still stops at 80 m.',
+     '关掉后，队友丢出的飞鹰信标将不再绘制。如果无法确认是否为队友信标，则回退为离当前视角超过80米的不画。',
+     'no_squad', 96, 'squad'),
 )
 STYLES = (
     ('Square', '方点', None, None, None),
-    ('Dash', '短划', 'mark_dash', 86, 2),
+    ('Dash', '短划线', 'mark_dash', 86, 2),
     ('Tick', '刻度', 'mark_tick', 87, 3),
     ('Cross', '十字', 'mark_plus', 88, 4),
 )
@@ -79,25 +100,31 @@ def manager_options(description):
                                        sub_option(pair('Off', '关闭'),
                                                   pair('Turn this off after deploy.', '部署后关掉这项。'), folder)]})
     options.append({'Name': pair('Marker Style', '边界样式'),
-                    'Description': pair('Leave unset or choose Square to keep solid blocks.',
-                                        '不选或选择方点，沿用实心小方块。'),
+                    'Description': pair(
+                        'Drawing style of the range boundary. Squares are solid blocks. Dashes follow the ring. '
+                        'Ticks point at the center. Crosses sit on each sample. Leave unset or choose Square.',
+                        '范围边界的绘制样式，方点是实心小方块。短划顺着边界。刻度指向圈心。十字画在每个采样点上。'
+                        '不选或选择方点，沿用实心小方块。'),
                     'SubOptions': [sub_option(pair(english, chinese),
                                               pair('Use this marker after deploy.', '部署后使用这种边界。'), folder)
                                    for english, chinese, folder, _index, _mark in STYLES]})
-    options.append({'Name': pair('Point Count', '圆周点数'),
-                    'Description': pair('Leave unset or choose 64 for the densest ring. Fewer is sparser.',
-                                        '不选或选择 64，沿用最密的一圈。越少越稀。'),
+    options.append({'Name': pair('Point Count', '边界绘制'),
+                    'Description': pair(
+                        'Points on one ring. Fewer means sparser. Leave unset or choose 64.',
+                        '每个边界上绘制的点数量，值越少点越稀疏。不选或选择 64，沿用最密的一圈。'),
                     'SubOptions': [sub_option(pair(str(count) + ' points', str(count) + ' 点'),
                                               pair('One ring uses ' + str(count) + ' points.',
-                                                   '一圈 ' + str(count) + ' 个点。'),
+                                                   '每个边界 ' + str(count) + ' 个点。'),
                                               None if count == 64 else 'samples_' + str(count))
                                    for count in SAMPLES]})
-    options.append({'Name': pair('Max Range', '最远距离'),
-                    'Description': pair('Leave unset or choose 120 for the default, measured from the current view.',
-                                        '不选或选择 120，沿用默认。从当前视角算起。'),
+    options.append({'Name': pair('Max Range', '最远绘制距离'),
+                    'Description': pair(
+                        'Meters from the current view. Farther calls are not drawn. Default 120. '
+                        'Leave unset or choose 120.',
+                        '从当前视角算起，超过这个米数将不再绘制预测范围，默认 120。不选或选择 120，沿用默认。'),
                     'SubOptions': [sub_option(pair(str(meters) + ' m', str(meters) + ' 米'),
                                               pair('Hide calls past ' + str(meters) + ' m.',
-                                                   '超过 ' + str(meters) + ' 米不画。'),
+                                                   '超过 ' + str(meters) + ' 米不再绘制预测范围。'),
                                               None if meters == 120 else 'range_' + str(meters))
                                    for meters in RANGES]})
     return options
