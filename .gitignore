@@ -1,5 +1,7 @@
 # Research inputs, captured logs, and pinned upstream trees. Local only.
-research/
+# The catalog is a packaging input, so it stays in the repository.
+research/*
+!research/eagle_catalog.json
 logs/
 _vendor/
 

@@ -28,7 +28,7 @@ TOGGLES = (
     ('Draw Rings', '绘制边界', 'The rings themselves. Off can leave the cross and text.', '范围圈本身。关掉后十字和文字可以单独留下。', 'no_dots', 83, 'dots'),
     ('Call Cross', '呼叫十字', 'Yellow cross on the call point.', '呼叫点上的黄色十字。', 'no_cross', 84, 'cross'),
     ('Type and Range', '型号与距离', 'Type, CALL REF, and BASELINE meters.', '型号、CALL REF 和 BASELINE 米数。', 'no_labels', 85, 'labels'),
-    ('Squad Ranges', '队友范围', 'Off hides a call owned by another avatar. A call with no comms owner still stops at 80 m.', '关掉后，通讯记录属于别人的不画。没有归属时仍按 80 米。', 'no_squad', 96, 'squad'),
+    ('Squad Ranges (Experimental)', '队友范围（实验性）', 'Off hides a call owned by another avatar. A call with no comms owner still stops at 80 m.', '关掉后，通讯记录属于别人的不画。没有归属时仍按 80 米。', 'no_squad', 96, 'squad'),
 )
 STYLES = (
     ('Square', '方点', None, None, None),

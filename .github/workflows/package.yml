@@ -1,0 +1,37 @@
+name: Package
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch the pinned Bingus Shared Loader packager
+        run: |
+          set -euo pipefail
+          rev=3d7e3a120828178573ef1ee0a5c7eeae4a951865
+          dest=_vendor/BingusSharedLoader/scripts
+          mkdir -p "$dest"
+          base="https://raw.githubusercontent.com/CowboyBingus/BingusSharedLoader/${rev}/scripts"
+          curl -fsSL "$base/archive.py" -o "$dest/archive.py"
+          curl -fsSL "$base/build_addon.py" -o "$dest/build_addon.py"
+
+      - name: Package
+        run: python -B tools/build_addon.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Eagle-HUD-reference
+          path: dist/Eagle-HUD-Probe.zip
+          if-no-files-found: error

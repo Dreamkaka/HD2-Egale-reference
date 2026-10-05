@@ -1,0 +1,1132 @@
+{
+  "schemaVersion": 1,
+  "hd2RuntimeVersion": "0.28.1",
+  "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+  "sourceFiles": [
+    {
+      "path": "_vendor\\HD2Runtime\\research\\offensive-stratagem-runtime-F5FEE03DCFDB.json",
+      "sha256": "A1F596C6D24B94571D97690C0B8FB62A10004CC46EAC5A2CED6A74F52D851E13"
+    },
+    {
+      "path": "_vendor\\HD2Runtime\\sdk\\StratagemAuthoringCapabilities.json",
+      "sha256": "9AF632C267950FD40CE120A4BA7A97FC464B922395F0ED0168B8A4B1552343CF"
+    }
+  ],
+  "valueKind": "baseline",
+  "limitations": [
+    "Snapshot catalog, not live mission-host settings or kill/safety boundaries.",
+    "Phases retain graph paths; impact, expiry and shrapnel are not merged.",
+    "nativeTypeValue is SDK identity, not a proven active-array type association.",
+    "spawnTimeRaw is not an observed call-in time or impact ETA."
+  ],
+  "eagleCount": 8,
+  "explosionPhaseCount": 10,
+  "stratagems": [
+    {
+      "name": "Eagle Gas Airstrike",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-gas-airstrike/79d872996d6ea28d",
+      "nativeTypeValue": 126,
+      "nativeType": "EagleAirstrikeGas",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage",
+        "delivery_1_projectile_impact_damage_status_1",
+        "delivery_1_projectile_impact_damage_status_2"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 331,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 1.0,
+            "outer": 12.0,
+            "shockwave": 15.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 188,
+          "group": 0,
+          "row": 8,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 500.0,
+            "projectile.mass": 100.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 234,
+          "group": 1,
+          "row": 234,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 331,
+          "group": 0,
+          "row": 215,
+          "fields": {
+            "explosion.inner_radius": 1.0,
+            "explosion.outer_radius": 12.0,
+            "explosion.shockwave_radius": 15.0
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 391,
+          "group": 1,
+          "row": 380,
+          "fields": {
+            "damage.standard_damage": 0,
+            "damage.durable_damage": 0,
+            "damage.ap_direct": 6,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 50,
+            "damage.stagger": 10,
+            "damage.push_force": 40
+          },
+          "statuses": [
+            "delivery:1/projectile/impact/damage/status:1",
+            "delivery:1/projectile/impact/damage/status:2"
+          ]
+        },
+        {
+          "kind": "StatusEffectSettings",
+          "path": "delivery:1/projectile/impact/damage/status:1",
+          "linkage": "damage_status",
+          "slot": 1,
+          "recordType": 42,
+          "group": 0,
+          "row": 41,
+          "parentDamageType": 391,
+          "parentDamageGroup": 1,
+          "parentDamageRow": 380,
+          "fields": {
+            "status.strength": 100.0,
+            "status.duration": 6.0
+          }
+        },
+        {
+          "kind": "StatusEffectSettings",
+          "path": "delivery:1/projectile/impact/damage/status:2",
+          "linkage": "damage_status",
+          "slot": 2,
+          "recordType": 44,
+          "group": 0,
+          "row": 43,
+          "parentDamageType": 391,
+          "parentDamageGroup": 1,
+          "parentDamageRow": 380,
+          "fields": {
+            "status.strength": 100.0,
+            "status.duration": 5.0
+          }
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 2,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle Strafing Run",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-strafing-run/a1e1cde13e369399",
+      "nativeTypeValue": 30,
+      "nativeType": "EagleCAS",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 50,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 2.5,
+            "outer": 5.0,
+            "shockwave": 6.5
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 16,
+          "group": 0,
+          "row": 38,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 1050.0,
+            "projectile.mass": 400.0,
+            "projectile.drag": 0.30000001192092896,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 218,
+          "group": 1,
+          "row": 217,
+          "fields": {
+            "damage.standard_damage": 350,
+            "damage.durable_damage": 200,
+            "damage.ap_direct": 5,
+            "damage.ap_slight": 5,
+            "damage.ap_large": 4,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 35,
+            "damage.push_force": 3
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 50,
+          "group": 0,
+          "row": 134,
+          "fields": {
+            "explosion.inner_radius": 2.5,
+            "explosion.outer_radius": 5.0,
+            "explosion.shockwave_radius": 6.5
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 367,
+          "group": 1,
+          "row": 356,
+          "fields": {
+            "damage.standard_damage": 350,
+            "damage.durable_damage": 350,
+            "damage.ap_direct": 3,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 35,
+            "damage.push_force": 5
+          },
+          "statuses": []
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 4,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle Airstrike",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-airstrike/5cddac74231a1faf",
+      "nativeTypeValue": 18,
+      "nativeType": "EagleAirstrike",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 194,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 5.0,
+            "outer": 10.0,
+            "shockwave": 14.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 170,
+          "group": 0,
+          "row": 2,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 500.0,
+            "projectile.mass": 100.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 234,
+          "group": 1,
+          "row": 234,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 194,
+          "group": 0,
+          "row": 209,
+          "fields": {
+            "explosion.inner_radius": 5.0,
+            "explosion.outer_radius": 10.0,
+            "explosion.shockwave_radius": 14.0
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 422,
+          "group": 1,
+          "row": 412,
+          "fields": {
+            "damage.standard_damage": 800,
+            "damage.durable_damage": 800,
+            "damage.ap_direct": 5,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 40,
+            "damage.stagger": 50,
+            "damage.push_force": 40
+          },
+          "statuses": []
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 2,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle Cluster Bomb",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-cluster-bomb/df0b62175b16b375",
+      "nativeTypeValue": 65,
+      "nativeType": "EagleClusterbombs",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_expiry",
+        "delivery_1_projectile_expiry_damage",
+        "delivery_1_projectile_expiry_shrapnel",
+        "delivery_1_projectile_expiry_shrapnel_damage",
+        "delivery_1_projectile_expiry_shrapnel_impact",
+        "delivery_1_projectile_expiry_shrapnel_impact_damage"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/expiry",
+          "linkage": "projectile_expiry",
+          "recordType": 417,
+          "damagePath": "delivery:1/projectile/expiry/damage",
+          "radiiMeters": {
+            "inner": 1.0,
+            "outer": 2.0,
+            "shockwave": 10.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        },
+        {
+          "path": "delivery:1/projectile/expiry/shrapnel/impact",
+          "linkage": "projectile_impact",
+          "recordType": 162,
+          "damagePath": "delivery:1/projectile/expiry/shrapnel/impact/damage",
+          "radiiMeters": {
+            "inner": 3.0,
+            "outer": 6.0,
+            "shockwave": 8.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 286,
+          "group": 0,
+          "row": 0,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 300.0,
+            "projectile.mass": 100.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "expiry": "delivery:1/projectile/expiry"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 234,
+          "group": 1,
+          "row": 234,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/expiry",
+          "linkage": "projectile_expiry",
+          "recordType": 417,
+          "group": 0,
+          "row": 208,
+          "fields": {
+            "explosion.inner_radius": 1.0,
+            "explosion.outer_radius": 2.0,
+            "explosion.shockwave_radius": 10.0
+          },
+          "damage": "delivery:1/projectile/expiry/damage",
+          "shrapnel": {
+            "count": 8,
+            "path": "delivery:1/projectile/expiry/shrapnel"
+          }
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/expiry/damage",
+          "linkage": "explosion_damage",
+          "recordType": 388,
+          "group": 1,
+          "row": 377,
+          "fields": {
+            "damage.standard_damage": 350,
+            "damage.durable_damage": 350,
+            "damage.ap_direct": 3,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 50,
+            "damage.push_force": 40
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile/expiry/shrapnel",
+          "linkage": "explosion_shrapnel",
+          "recordType": 131,
+          "group": 0,
+          "row": 1,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 30.0,
+            "projectile.mass": 50.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/expiry/shrapnel/damage",
+          "impact": "delivery:1/projectile/expiry/shrapnel/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/expiry/shrapnel/damage",
+          "linkage": "projectile_damage",
+          "recordType": 32,
+          "group": 1,
+          "row": 33,
+          "fields": {
+            "damage.standard_damage": 20,
+            "damage.durable_damage": 2,
+            "damage.ap_direct": 0,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 10,
+            "damage.stagger": 30,
+            "damage.push_force": 10
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/expiry/shrapnel/impact",
+          "linkage": "projectile_impact",
+          "recordType": 162,
+          "group": 0,
+          "row": 166,
+          "fields": {
+            "explosion.inner_radius": 3.0,
+            "explosion.outer_radius": 6.0,
+            "explosion.shockwave_radius": 8.0
+          },
+          "damage": "delivery:1/projectile/expiry/shrapnel/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/expiry/shrapnel/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 388,
+          "group": 1,
+          "row": 377,
+          "fields": {
+            "damage.standard_damage": 350,
+            "damage.durable_damage": 350,
+            "damage.ap_direct": 3,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 50,
+            "damage.push_force": 40
+          },
+          "statuses": []
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 4,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle Smoke Strike",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-smoke-strike/6723261f1305fce1",
+      "nativeTypeValue": 38,
+      "nativeType": "EagleAirstrikeSmoke",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 75,
+          "damagePath": null,
+          "radiiMeters": {
+            "inner": 12.0,
+            "outer": 12.0,
+            "shockwave": 0.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 130,
+          "group": 0,
+          "row": 9,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 500.0,
+            "projectile.mass": 100.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 234,
+          "group": 1,
+          "row": 234,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 75,
+          "group": 0,
+          "row": 161,
+          "fields": {
+            "explosion.inner_radius": 12.0,
+            "explosion.outer_radius": 12.0,
+            "explosion.shockwave_radius": 0.0
+          }
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 2,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle Napalm Airstrike",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-napalm-airstrike/f0cbd3eb6d1eb76e",
+      "nativeTypeValue": 133,
+      "nativeType": "EagleAirstrikeNapalm",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage",
+        "delivery_1_projectile_impact_damage_status_1",
+        "delivery_1_projectile_impact_damage_status_2"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 359,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 2.0,
+            "outer": 10.0,
+            "shockwave": 15.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 141,
+          "group": 0,
+          "row": 6,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 500.0,
+            "projectile.mass": 100.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 234,
+          "group": 1,
+          "row": 234,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 359,
+          "group": 0,
+          "row": 213,
+          "fields": {
+            "explosion.inner_radius": 2.0,
+            "explosion.outer_radius": 10.0,
+            "explosion.shockwave_radius": 15.0
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 390,
+          "group": 1,
+          "row": 379,
+          "fields": {
+            "damage.standard_damage": 250,
+            "damage.durable_damage": 250,
+            "damage.ap_direct": 3,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 50,
+            "damage.push_force": 40
+          },
+          "statuses": [
+            "delivery:1/projectile/impact/damage/status:1",
+            "delivery:1/projectile/impact/damage/status:2"
+          ]
+        },
+        {
+          "kind": "StatusEffectSettings",
+          "path": "delivery:1/projectile/impact/damage/status:1",
+          "linkage": "damage_status",
+          "slot": 1,
+          "recordType": 5,
+          "group": 0,
+          "row": 4,
+          "parentDamageType": 390,
+          "parentDamageGroup": 1,
+          "parentDamageRow": 379,
+          "fields": {
+            "status.strength": 100.0,
+            "status.duration": 3.0
+          }
+        },
+        {
+          "kind": "StatusEffectSettings",
+          "path": "delivery:1/projectile/impact/damage/status:2",
+          "linkage": "damage_status",
+          "slot": 2,
+          "recordType": 32,
+          "group": 0,
+          "row": 31,
+          "parentDamageType": 390,
+          "parentDamageGroup": 1,
+          "parentDamageRow": 379,
+          "fields": {
+            "status.strength": 50.0,
+            "status.duration": 1.0
+          }
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 2,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle 110mm Rocket Pods",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-110mm-rocket-pods/11490e97c2009cb0",
+      "nativeTypeValue": 140,
+      "nativeType": "EagleRocket",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 229,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 1.600000023841858,
+            "outer": 5.0,
+            "shockwave": 8.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 82,
+          "group": 0,
+          "row": 268,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 700.0,
+            "projectile.mass": 3300.0,
+            "projectile.drag": 0.0,
+            "projectile.gravity": 2.0999999046325684
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 248,
+          "group": 1,
+          "row": 248,
+          "fields": {
+            "damage.standard_damage": 600,
+            "damage.durable_damage": 600,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 40,
+            "damage.stagger": 40,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 229,
+          "group": 0,
+          "row": 243,
+          "fields": {
+            "explosion.inner_radius": 1.600000023841858,
+            "explosion.outer_radius": 5.0,
+            "explosion.shockwave_radius": 8.0
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 403,
+          "group": 1,
+          "row": 393,
+          "fields": {
+            "damage.standard_damage": 300,
+            "damage.durable_damage": 300,
+            "damage.ap_direct": 4,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 30,
+            "damage.stagger": 30,
+            "damage.push_force": 10
+          },
+          "statuses": []
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 3,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    },
+    {
+      "name": "Eagle 500kg Bomb",
+      "family": "eagle",
+      "semanticId": "stratagem/v1/eagle-500kg-bomb/6946e7017aa35013",
+      "nativeTypeValue": 3,
+      "nativeType": "EagleBomb",
+      "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+      "valueKind": "baseline",
+      "attackRoles": [
+        "delivery_1_projectile",
+        "delivery_1_projectile_damage",
+        "delivery_1_projectile_impact",
+        "delivery_1_projectile_impact_damage",
+        "delivery_1_projectile_expiry",
+        "delivery_1_projectile_expiry_damage"
+      ],
+      "phases": [
+        {
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 193,
+          "damagePath": "delivery:1/projectile/impact/damage",
+          "radiiMeters": {
+            "inner": 1.0,
+            "outer": 3.0,
+            "shockwave": 6.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        },
+        {
+          "path": "delivery:1/projectile/expiry",
+          "linkage": "projectile_expiry",
+          "recordType": 277,
+          "damagePath": "delivery:1/projectile/expiry/damage",
+          "radiiMeters": {
+            "inner": 10.0,
+            "outer": 25.0,
+            "shockwave": 35.0
+          },
+          "sourceSnapshot": "F5FEE03DCFDB-20260926T222226Z.hd2snap",
+          "valueKind": "baseline"
+        }
+      ],
+      "nativeGraph": [
+        {
+          "kind": "ProjectileSettings",
+          "path": "delivery:1/projectile",
+          "linkage": "payload_delivery",
+          "recordType": 239,
+          "group": 0,
+          "row": 12,
+          "fields": {
+            "projectile.pellet_count": 1,
+            "projectile.velocity": 500.0,
+            "projectile.mass": 500.0,
+            "projectile.drag": 0.5,
+            "projectile.gravity": 1.0
+          },
+          "damage": "delivery:1/projectile/damage",
+          "impact": "delivery:1/projectile/impact",
+          "expiry": "delivery:1/projectile/expiry"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/damage",
+          "linkage": "projectile_damage",
+          "recordType": 251,
+          "group": 1,
+          "row": 251,
+          "fields": {
+            "damage.standard_damage": 2000,
+            "damage.durable_damage": 2000,
+            "damage.ap_direct": 7,
+            "damage.ap_slight": 7,
+            "damage.ap_large": 7,
+            "damage.ap_extreme": 7,
+            "damage.demolition": 50,
+            "damage.stagger": 20,
+            "damage.push_force": 15
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/impact",
+          "linkage": "projectile_impact",
+          "recordType": 193,
+          "group": 0,
+          "row": 267,
+          "fields": {
+            "explosion.inner_radius": 1.0,
+            "explosion.outer_radius": 3.0,
+            "explosion.shockwave_radius": 6.0
+          },
+          "damage": "delivery:1/projectile/impact/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/impact/damage",
+          "linkage": "explosion_damage",
+          "recordType": 421,
+          "group": 1,
+          "row": 411,
+          "fields": {
+            "damage.standard_damage": 100,
+            "damage.durable_damage": 100,
+            "damage.ap_direct": 3,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 40,
+            "damage.stagger": 10,
+            "damage.push_force": 40
+          },
+          "statuses": []
+        },
+        {
+          "kind": "ExplosionSettings",
+          "path": "delivery:1/projectile/expiry",
+          "linkage": "projectile_expiry",
+          "recordType": 277,
+          "group": 0,
+          "row": 216,
+          "fields": {
+            "explosion.inner_radius": 10.0,
+            "explosion.outer_radius": 25.0,
+            "explosion.shockwave_radius": 35.0
+          },
+          "damage": "delivery:1/projectile/expiry/damage"
+        },
+        {
+          "kind": "DamageInfo",
+          "path": "delivery:1/projectile/expiry/damage",
+          "linkage": "explosion_damage",
+          "recordType": 453,
+          "group": 1,
+          "row": 445,
+          "fields": {
+            "damage.standard_damage": 1500,
+            "damage.durable_damage": 1500,
+            "damage.ap_direct": 6,
+            "damage.ap_slight": 0,
+            "damage.ap_large": 0,
+            "damage.ap_extreme": 0,
+            "damage.demolition": 50,
+            "damage.stagger": 100,
+            "damage.push_force": 40
+          },
+          "statuses": []
+        }
+      ],
+      "spawnTimeRaw": 0,
+      "callInTime": {
+        "value": null,
+        "writable": false,
+        "reason": "The resolved spawn-time scalar does not reproduce the semantic call-in time across families."
+      },
+      "usesPerRearm": 1,
+      "rearmTime": 150,
+      "eagleReviewedScalars": [
+        {}
+      ]
+    }
+  ]
+}
