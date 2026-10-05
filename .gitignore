@@ -1,0 +1,13 @@
+# Research inputs, captured logs, and pinned upstream trees. Local only.
+research/
+logs/
+_vendor/
+
+# Generated entry, build report, packages, and extracted patches.
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
