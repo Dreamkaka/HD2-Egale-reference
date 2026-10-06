@@ -332,6 +332,7 @@ clear_references = function()
     end
 end
 local function reset(reason)
+    armed = nil
     clear_references()
     renderer_unavailable = nil
     log('references_cleared', {reason = reason})
@@ -485,6 +486,21 @@ local function sample(now)
             if calls then attach_throwers(rows, calls) end
             display.avatar = sample_avatar(runtime, game_base, player.avatar_network_id)
             models, why = references.collect(rows)
+            if models then
+                local best, rank
+                for index = 1, #models do
+                    local model = models[index]
+                    local known = model.definition
+                    if known and known.draw_rings and model.aim ~= true then
+                        local mine = display.avatar and model.thrower == display.avatar
+                        local next_rank = mine and 0 or 1
+                        if not rank or next_rank < rank or next_rank == rank then
+                            best, rank = known, next_rank
+                        end
+                    end
+                end
+                if best then armed = best end
+            end
             if models and world and #models < 16 then
                 if display.aim == false then
                     changed_reason('aim', 'off')
@@ -532,14 +548,13 @@ local function sample(now)
                                     preview.runMeters = run
                                     if definition.pattern == 'across' then preview.centered = true end
                                 end
-                                changed_reason('aim', 'edge')
+                                changed_reason('aim', 'edge:' .. tostring(definition.name))
                             else
-                                changed_reason('aim', 'cross')
+                                changed_reason('aim', 'cross:no_type')
                             end
                             models[#models + 1] = preview
                         end
                     elseif aim_why == 'holstered' then
-                        armed = nil
                         changed_reason('aim', 'holstered')
                     else
                         changed_reason('aim', tostring(aim_why or 'idle'))
