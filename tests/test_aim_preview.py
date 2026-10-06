@@ -43,16 +43,29 @@ class AimPreview(unittest.TestCase):
         vm.globals().h = harness
         vm.execute('''
             models = {{
-                x = 0, y = 8, z = 10, aim = true, heading = {x = 0, y = 1},
-                path = {{0, 0, 12}, {0, 4, 11}, {0, 8, 10}},
+                x = 0, y = 0, z = 10, aim = true, edge_only = true,
                 definition = {name = "Eagle Airstrike", type = 18, caption = "unused",
-                    draw_rings = true, phases = {{label = "impact", outerRadius = 6}}},
+                    draw_rings = true, phases = {{label = "impact", innerRadius = 1,
+                        outerRadius = 6, shockwaveRadius = 12}}},
             }}
             fonts = h.fonts
         ''')
         visible = renderer.draw(vm.globals().models, vm.globals().fonts)
         self.assertEqual(visible, (True, 1))
         self.assertEqual(harness.count('texts'), 0)
+        self.assertGreater(harness.count('rects', 951), 0)
+        self.assertFalse(vm.execute('''return (function()
+            for _, r in pairs(h.gui.rects) do
+                if r.position[3] == 951 and r.color[3] == 176 then return true end
+            end
+            return false
+        end)()'''))
+        self.assertTrue(vm.execute('''return (function()
+            for _, r in pairs(h.gui.rects) do
+                if r.position[3] == 951 and r.color[3] == 48 then return true end
+            end
+            return false
+        end)()'''))
         self.assertEqual(harness.temp, 100)
 
     def test_range_dots_use_sampled_ground_height(self):

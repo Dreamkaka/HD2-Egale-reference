@@ -133,18 +133,9 @@ return function(sr, log)
             local model = models[n]
             assert(type(model) == "table" and finite(model.x) and finite(model.y) and finite(model.z), "position_nonfinite")
             local def = model.definition
-            if model.aim == true then
-                local path = model.path
-                assert(type(path) == "table" and #path >= 2 and #path <= 240, "aim_path_invalid")
-                for index = 1, #path do
-                    local point = path[index]
-                    assert(type(point) == "table" and finite(point[1]) and finite(point[2]) and finite(point[3]),
-                        "aim_path_invalid")
-                end
-                if model.heading ~= nil then
-                    assert(type(model.heading) == "table" and finite(model.heading.x) and finite(model.heading.y),
-                        "aim_heading_invalid")
-                end
+            if model.aim == true and model.heading ~= nil then
+                assert(type(model.heading) == "table" and finite(model.heading.x) and finite(model.heading.y),
+                    "aim_heading_invalid")
             end
             if model.aim ~= true or def ~= nil then
             assert(type(def) == "table" and type(def.name) == "string" and type(def.caption) == "string"
@@ -400,14 +391,14 @@ return function(sr, log)
                 local y = math.max(0, math.min(py - half, height - size))
                 rect(x, y, size, size, 951, red, green, blue)
             end
-            local function radii(def, draw_one)
+            local function radii(def, draw_one, edge_only)
                 for _, phase in ipairs(def.phases) do
                     local inner, outer, shock = phase.innerRadius, phase.outerRadius, phase.shockwaveRadius
-                    if enabled("inner") and inner and outer and math.abs(inner - outer) > 0.05 then
+                    if enabled("inner") and not edge_only and inner and outer and math.abs(inner - outer) > 0.05 then
                         draw_one(inner, "inner")
                     end
                     if enabled("outer") then draw_one(outer, "outer") end
-                    if enabled("shock") and shock and shock > 0 and (not outer or shock > outer + 0.05) then
+                    if enabled("shock") and not edge_only and shock and shock > 0 and (not outer or shock > outer + 0.05) then
                         draw_one(shock, "shock")
                     end
                 end
@@ -434,49 +425,6 @@ return function(sr, log)
                 local pdx, pdy, pdz = model.x - cx, model.y - cy, model.z - cz
                 if not (not squad_on and theirs)
                     and pdx * pdx + pdy * pdy + pdz * pdz <= limit * limit then
-                if model.aim == true then
-                    local shown = false
-                    local path = model.path
-                    local stride = math.max(1, math.floor(#path / 32))
-                    for index = 1, #path, stride do
-                        local point = path[index]
-                        local px, py = project(point[1], point[2], point[3], 2)
-                        if px then
-                            rect(px - 1, py - 1, 3, 3, 950, 255, 210, 90)
-                            shown = true
-                        end
-                    end
-                    local ax, ay = project(model.x, model.y, model.z, 0)
-                    if ax then
-                        local arm, thick = 10, 2
-                        local left, right = math.max(0, ax - arm), math.min(width, ax + arm)
-                        local bottom, top = math.max(0, ay - arm), math.min(height, ay + arm)
-                        local band_y, band_x = math.max(0, ay - thick / 2), math.max(0, ax - thick / 2)
-                        rect(left, band_y, right - left, math.min(thick, height - band_y), 950, 255, 210, 90)
-                        rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 950, 255, 210, 90)
-                        shown = true
-                        local radius
-                        local cover = model.definition
-                        if cover and cover.draw_rings and enabled("dots") then
-                            for _, phase in ipairs(cover.phases) do
-                                if phase.outerRadius and phase.outerRadius > 0 then radius = phase.outerRadius end
-                            end
-                        end
-                        if radius then
-                            for step = 0, 11 do
-                                local angle = step * math.pi * 2 / 12
-                                local wx = model.x + math.cos(angle) * radius
-                                local wy = model.y + math.sin(angle) * radius
-                                local qx, qy = project(wx, wy, surface(wx, wy, model.z), 4)
-                                if qx then
-                                    rect(qx - 1, qy - 1, 3, 3, 950, 255, 196, 64)
-                                    shown = true
-                                end
-                            end
-                        end
-                    end
-                    if shown then visible = visible + 1 end
-                else
                 local sx, sy = project(model.x, model.y, surface(model.x, model.y, model.z), 0)
                 local shown = false
                 local def = model.definition
@@ -536,7 +484,7 @@ return function(sr, log)
                             dot(x0 + (-c * ux + s * px) * radius, y0 + (-c * uy + s * py) * radius, x0, y0)
                         end
                     end
-                    radii(def, outline)
+                    radii(def, outline, model.edge_only)
                 end
                 if sx then
                     if ranged and not along then
@@ -553,7 +501,7 @@ return function(sr, log)
                                 shown = true
                             end)
                         end
-                        radii(def, ring)
+                        radii(def, ring, model.edge_only)
                     end
                     if enabled("cross") then
                         local arm, thick = 16, 4
@@ -564,13 +512,12 @@ return function(sr, log)
                         rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 952, 255, 230, 40)
                         shown = true
                     end
-                    if enabled("labels") then
+                    if enabled("labels") and not model.edge_only then
                         placed[#placed + 1] = {model, sx, sy}
                         shown = true
                     end
                 end
                 if shown then visible = visible + 1 end
-                end
                 end
             end
             local function clear_texts()

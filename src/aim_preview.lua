@@ -70,6 +70,19 @@ local function beacon_in_hand(sr, world, body)
     return held
 end
 
+local user32
+local function right_held()
+    local ok, down = pcall(function()
+        if not user32 then
+            local ffi = require('ffi')
+            ffi.cdef[[short __stdcall GetAsyncKeyState(int);]]
+            user32 = ffi.load('user32')
+        end
+        return tonumber(user32.GetAsyncKeyState(2)) or 0
+    end)
+    return ok and down < 0
+end
+
 local function create_aim(flight, ray)
     assert(type(flight) == 'table' and type(flight.integrate) == 'function', 'beacon flight required')
     assert(type(ray) == 'table' and type(ray.trim) == 'function', 'ground ray required')
@@ -84,7 +97,8 @@ local function create_aim(flight, ray)
         if not camera or not forward or not right or not up then return nil, 'basis_unavailable' end
         local body = closest_body(sr, world, camera)
         if not body then return nil, 'body_unavailable' end
-        if not beacon_in_hand(sr, world, body) then return nil, 'not_aiming' end
+        if not beacon_in_hand(sr, world, body) then return nil, 'holstered' end
+        if not right_held() then return nil, 'not_aiming' end
         if not sr.Unit.has_node(body, 'r_shoulder') then return nil, 'shoulder_unavailable' end
         local shoulder = copy3(sr, sr.Unit.world_position(body, sr.Unit.node(body, 'r_shoulder')))
         if not shoulder then return nil, 'shoulder_unavailable' end
@@ -93,9 +107,9 @@ local function create_aim(flight, ray)
         local hit, path = ray.trim(sr, world, body, points)
         if not hit then return nil, path or 'clear' end
         local flat_x, flat_y = forward[1], forward[2]
-        local flat = math.sqrt(flat_x * flat_x + flat_y * flat_y)
         local model = {
-            x = hit[1], y = hit[2], z = hit[3], aim = true, path = path,
+            x = hit[1], y = hit[2], z = hit[3], aim = true,
+            origin = shoulder,
         }
         if flat > 1e-4 then
             model.heading = {x = flat_x / flat, y = flat_y / flat}

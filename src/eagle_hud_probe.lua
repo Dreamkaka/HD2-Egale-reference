@@ -52,7 +52,7 @@ end
 local ffi, runtime, game_base, exe_handle, game_handle
 local native_stopped, next_module_check = false, 0
 local reasons = {}
-local references, renderer, renderer_unavailable, aim
+local references, renderer, renderer_unavailable, aim, armed
 local current_models, current_fonts, current_world
 local clear_references
 local function changed_reason(channel, reason)
@@ -363,7 +363,7 @@ local option_rows = {
     {key = 'labels', id = 'engle.eagle_hud.labels', kind = 'toggle', default = true, label = 'Type and Range / 型号与距离注释',
         description = 'Whether to display annotations regarding the range size and lethality indicators. / 是否显示范围大小和致死提示的相关注释。'},
     {key = 'aim', id = 'engle.eagle_hud.aim', kind = 'toggle', default = true, gap = true, label = 'Aim Landing / 瞄准落点预判',
-        description = 'Sparse arc and landing cross while the stratagem ball is in hand. Off hides that preview. / 拿着战略配备球时显示稀疏落点弧线和十字。关掉后不再预判。'},
+        description = 'Hold right mouse with the stratagem ball to show the red damage edge. Releasing it hides the preview. / 拿着战略配备球并按住右键时，只显示红色伤害边界。松开右键后隐藏。'},
 }
 local options_pending = true
 local function apply_profile()
@@ -493,8 +493,52 @@ local function sample(now)
                     if not ok then
                         changed_reason('aim', 'unavailable:' .. tostring(preview))
                     elseif preview then
-                        models[#models + 1] = preview
-                        changed_reason('aim', 'landing')
+                        local definition = armed
+                        local origin = preview.origin
+                        if origin then
+                            local best, best_score
+                            for index = 1, #models do
+                                local model = models[index]
+                                if model.definition then
+                                    local dx = model.x - origin[1]
+                                    local dy = model.y - origin[2]
+                                    local dz = model.z - origin[3]
+                                    local distance = math.sqrt(dx * dx + dy * dy + dz * dz)
+                                    local mine = display.avatar and model.thrower == display.avatar
+                                    if mine or distance <= 12 then
+                                        local score = distance + (mine and 0 or 50)
+                                        if not best_score or score < best_score then
+                                            best, best_score = model.definition, score
+                                        end
+                                    end
+                                end
+                            end
+                            if best then definition, armed = best, best end
+                        end
+                        local landed = false
+                        for index = 1, #models do
+                            local dx, dy = models[index].x - preview.x, models[index].y - preview.y
+                            if dx * dx + dy * dy <= 36 then landed = true; break end
+                        end
+                        if landed then
+                            changed_reason('aim', 'handoff')
+                        elseif definition and definition.draw_rings then
+                            preview.definition = definition
+                            preview.edge_only = true
+                            local run = definition.runMeters
+                            if preview.heading and type(run) == 'number' and run > 0 and run <= 168 then
+                                preview.axis = preview.heading
+                                preview.runMeters = run
+                                if definition.pattern == 'across' then preview.centered = true end
+                            end
+                            models[#models + 1] = preview
+                            changed_reason('aim', 'edge')
+                        else
+                            changed_reason('aim', 'untyped')
+                        end
+                    elseif aim_why == 'holstered' then
+                        armed = nil
+                        changed_reason('aim', 'holstered')
                     else
                         changed_reason('aim', tostring(aim_why or 'idle'))
                     end
