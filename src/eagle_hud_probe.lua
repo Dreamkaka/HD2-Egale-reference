@@ -1,7 +1,7 @@
 -- HD2-Addon: mods/engle/eagle_hud_probe
 -- Current-record spatial references, not predicted bomb impacts or persistent sortie identities.
 -- The build embeds the independent reader, renderer, collector and baseline catalog.
-local create_readonly_runtime, create_renderer, create_references, catalog = ...
+local create_readonly_runtime, create_renderer, create_references, catalog, create_aim_preview = ...
 local existing = rawget(_G, 'EngleEagleHudProbe')
 if existing then return existing end
 local state = {status = 'initializing', sequence = 0, frame = 0, mission = false, epoch = 0, game_time = 0}
@@ -52,7 +52,7 @@ end
 local ffi, runtime, game_base, exe_handle, game_handle
 local native_stopped, next_module_check = false, 0
 local reasons = {}
-local references, renderer, renderer_unavailable
+local references, renderer, renderer_unavailable, aim
 local current_models, current_fonts, current_world
 local clear_references
 local function changed_reason(channel, reason)
@@ -337,7 +337,7 @@ local function reset(reason)
     log('references_cleared', {reason = reason})
 end
 local display = {inner = true, outer = true, shock = true, dots = true, cross = true, labels = true,
-    squad = true, mark = 1, samples = 64, range = 120}
+    squad = true, aim = true, mark = 1, samples = 64, range = 120}
 local option_rows = {
     {key = 'inner', id = 'engle.eagle_hud.inner', kind = 'toggle', default = true, label = 'Full Damage / 满伤内半径',
         description = 'Orange square dots. Full-damage edge. / 橙色范围。代表满伤边界'},
@@ -362,13 +362,15 @@ local option_rows = {
         description = 'Yellow cross on the call point. / 呼叫点上的黄色十字。'},
     {key = 'labels', id = 'engle.eagle_hud.labels', kind = 'toggle', default = true, label = 'Type and Range / 型号与距离注释',
         description = 'Whether to display annotations regarding the range size and lethality indicators. / 是否显示范围大小和致死提示的相关注释。'},
+    {key = 'aim', id = 'engle.eagle_hud.aim', kind = 'toggle', default = true, gap = true, label = 'Aim Landing / 瞄准落点预判',
+        description = 'Sparse arc and landing cross while the stratagem ball is in hand. Off hides that preview. / 拿着战略配备球时显示稀疏落点弧线和十字。关掉后不再预判。'},
 }
 local options_pending = true
 local function apply_profile()
     local profile = rawget(_G, 'EngleEagleHudProfile')
     if type(profile) ~= 'table' then return end
     changed_reason('profile', 'manager')
-    for _, key in ipairs({'inner', 'outer', 'shock', 'dots', 'cross', 'labels', 'squad'}) do
+    for _, key in ipairs({'inner', 'outer', 'shock', 'dots', 'cross', 'labels', 'squad', 'aim'}) do
         if profile[key] == false then display[key] = false end
     end
     local mark = profile.mark
@@ -413,6 +415,7 @@ local function sync_options()
         if usable then display[row.key] = value end
     end
 end
+local draw_options = setmetatable({}, {__index = display})
 local function draw_references()
     if not current_models or #current_models == 0 or not current_fonts then return end
     if not renderer then
@@ -425,7 +428,20 @@ local function draw_references()
         end
         renderer = created
     end
-    local ok, drawn, result = pcall(renderer.draw, current_models, current_fonts, current_world, display)
+    local sr = rawget(_G, 'stingray')
+    if aim and current_world and type(aim.begin) == 'function' then pcall(aim.begin, sr, current_world) end
+    if aim and type(aim.height) == 'function' then
+        draw_options.surface = function(x, y, z)
+            local sampled, hit = pcall(aim.height, x, y, z)
+            if sampled and type(hit) == 'number' and hit == hit and hit > -100000 and hit < 100000 then
+                return hit
+            end
+            return z
+        end
+    else
+        draw_options.surface = nil
+    end
+    local ok, drawn, result = pcall(renderer.draw, current_models, current_fonts, current_world, draw_options)
     if not ok or not drawn then
         local why = tostring(ok and result or drawn)
         clear_references()
@@ -469,6 +485,21 @@ local function sample(now)
             if calls then attach_throwers(rows, calls) end
             display.avatar = sample_avatar(runtime, game_base, player.avatar_network_id)
             models, why = references.collect(rows)
+            if models and world and #models < 16 then
+                if display.aim == false then
+                    changed_reason('aim', 'off')
+                elseif aim then
+                    local ok, preview, aim_why = pcall(aim.predict, rawget(_G, 'stingray'), world)
+                    if not ok then
+                        changed_reason('aim', 'unavailable:' .. tostring(preview))
+                    elseif preview then
+                        models[#models + 1] = preview
+                        changed_reason('aim', 'landing')
+                    else
+                        changed_reason('aim', tostring(aim_why or 'idle'))
+                    end
+                end
+            end
         end
         if not models then
             clear_references()
@@ -516,6 +547,12 @@ local ok, why = pcall(function()
         'embedded HUD modules missing; use tools/build_addon.py')
     references = create_references(catalog)
     assert(type(references) == 'table' and type(references.collect) == 'function', 'reference catalog unavailable')
+    if type(create_aim_preview) == 'function' then
+        local created_ok, created = pcall(create_aim_preview)
+        if created_ok and type(created) == 'table' and type(created.predict) == 'function' then
+            aim = created
+        end
+    end
     local previous_update = rawget(_G, 'update')
     assert(type(previous_update) == 'function', 'game update callback unavailable')
     local next_sample = 0

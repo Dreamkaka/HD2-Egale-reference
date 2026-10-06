@@ -50,6 +50,10 @@ TOGGLES = (
      'Off hides a call whose comms owner is another avatar. A call with no comms owner still stops at 80 m.',
      '关掉后，队友丢出的飞鹰信标将不再绘制。如果无法确认是否为队友信标，则回退为离当前视角超过80米的不画。',
      'no_squad', 96, 'squad'),
+    ('Aim Landing', '瞄准落点预判',
+     'Sparse arc and landing cross while the stratagem ball is in hand. Off hides that preview.',
+     '拿着战略配备球时显示稀疏落点弧线和十字。关掉后不再预判。',
+     'no_aim', 103, 'aim'),
 )
 STYLES = (
     ('Square', '方点', None, None, None),
@@ -131,10 +135,16 @@ def manager_options(description):
 
 
 def compose_source():
-    reader = (ROOT / 'src/windows_readonly.lua').read_text(encoding='utf-8')
-    probe = (ROOT / 'src/eagle_hud_probe.lua').read_text(encoding='utf-8')
-    renderer = (ROOT / 'src/spatial_renderer.lua').read_text(encoding='utf-8')
-    references = (ROOT / 'src/eagle_references.lua').read_text(encoding='utf-8')
+    def chunk(path):
+        return (ROOT / path).read_text(encoding='utf-8')
+    reader = chunk('src/windows_readonly.lua')
+    probe = chunk('src/eagle_hud_probe.lua')
+    renderer = chunk('src/spatial_renderer.lua')
+    references = chunk('src/eagle_references.lua')
+    flight = chunk('src/beacon_flight.lua')
+    recipes = chunk('src/ray_recipes.lua')
+    ray = chunk('src/ground_ray.lua')
+    preview = chunk('src/aim_preview.lua')
     spec = importlib.util.spec_from_file_location('engle_catalog', ROOT / 'tools/eagle_catalog.py')
     normalizer = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(normalizer)
@@ -147,8 +157,16 @@ def compose_source():
             + 'local create_renderer = (function()\n' + renderer + '\nend)()\n'
             + 'local create_references = (function()\n' + references + '\nend)()\n'
             + 'local catalog = ' + catalog + '\n'
+            + 'local create_aim_preview = (function()\n'
+            + 'local flight = (function()\n' + flight + '\nend)()\n'
+            + 'local recipes = (function()\n' + recipes + '\nend)()\n'
+            + 'local create_ray = (function()\n' + ray + '\nend)()\n'
+            + 'local create_aim = (function()\n' + preview + '\nend)()\n'
+            + 'return function() return create_aim(flight, create_ray(recipes)) end\n'
+            + 'end)()\n'
             + 'return (function(...)\n' + probe[len(marker):]
-            + '\nend)(create_reader, create_renderer, create_references, catalog)\n').encode('utf-8')
+            + '\nend)(create_reader, create_renderer, create_references, catalog, create_aim_preview)\n'
+            ).encode('utf-8')
 
 
 def build(output: Path):

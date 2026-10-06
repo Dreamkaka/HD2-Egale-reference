@@ -124,6 +124,7 @@ sr.Camera = {
     world_to_screen = function(camera, point)
         check(camera) check(point)
         h.projection_calls = h.projection_calls + 1
+        if h.record_z then h.ground_z = h.ground_z or {}; h.ground_z[#h.ground_z + 1] = point[3] end
         if h.bad_projection then return vector(0 / 0, 0, 0) end
         if camera.stick_center then return vector(h.width / 2, h.height / 2, 0) end
         return vector(h.width / 2 + (point[1] - camera.x) * 10,

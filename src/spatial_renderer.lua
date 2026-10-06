@@ -6,6 +6,8 @@
 -- still stops at 80 m. An owned call uses the configured distance.
 -- Strafing with a 1-80 m anchor draws those radii along a 50 m centerline past the call point.
 -- That length is the wiki's approximate run, not a measured bomb line.
+-- When options.surface returns a height, each range sample uses that ground
+-- height instead of the flat call altitude. A miss keeps the flat height.
 local SAMPLES = 64
 local CORRIDOR_SIDE = 24
 local CORRIDOR_CAP = 16
@@ -131,6 +133,20 @@ return function(sr, log)
             local model = models[n]
             assert(type(model) == "table" and finite(model.x) and finite(model.y) and finite(model.z), "position_nonfinite")
             local def = model.definition
+            if model.aim == true then
+                local path = model.path
+                assert(type(path) == "table" and #path >= 2 and #path <= 240, "aim_path_invalid")
+                for index = 1, #path do
+                    local point = path[index]
+                    assert(type(point) == "table" and finite(point[1]) and finite(point[2]) and finite(point[3]),
+                        "aim_path_invalid")
+                end
+                if model.heading ~= nil then
+                    assert(type(model.heading) == "table" and finite(model.heading.x) and finite(model.heading.y),
+                        "aim_heading_invalid")
+                end
+            end
+            if model.aim ~= true or def ~= nil then
             assert(type(def) == "table" and type(def.name) == "string" and type(def.caption) == "string"
                 and finite(def.type) and def.type % 1 == 0 and type(def.draw_rings) == "boolean"
                 and type(def.phases) == "table", "definition_invalid")
@@ -155,6 +171,7 @@ return function(sr, log)
                 assert(math.abs(span - 1) <= 1e-4, "axis_invalid")
                 assert(finite(model.runMeters) and model.runMeters > 0 and model.runMeters <= 168, "run_invalid")
                 if model.centered ~= nil then assert(model.centered == true, "centered_invalid") end
+            end
             end
         end
     end
@@ -311,6 +328,13 @@ return function(sr, log)
                 if sx < margin or sy < margin or sx > width - margin or sy > height - margin then return nil end
                 return sx, sy
             end
+            local function surface(x, y, z)
+                local sample = options and options.surface
+                if type(sample) ~= "function" then return z end
+                local ok, hit = pcall(sample, x, y, z)
+                if ok and finite(hit) then return hit end
+                return z
+            end
             local visible, placed = 0, {}
             local function boundary_style()
                 local n = options and options.mark
@@ -403,14 +427,57 @@ return function(sr, log)
                 local thrower = model.thrower
                 local owned = type(thrower) == "number" and thrower > 0 and thrower < 4294967296
                     and thrower == math.floor(thrower)
-                local mine = owned and known_avatar and thrower == avatar
+                local mine = (owned and known_avatar and thrower == avatar) or model.aim == true
                 local theirs = owned and known_avatar and thrower ~= avatar
                 local limit = reach
                 if not squad_on and not mine and limit > 80 then limit = 80 end
                 local pdx, pdy, pdz = model.x - cx, model.y - cy, model.z - cz
                 if not (not squad_on and theirs)
                     and pdx * pdx + pdy * pdy + pdz * pdz <= limit * limit then
-                local sx, sy = project(model.x, model.y, model.z, 0)
+                if model.aim == true then
+                    local shown = false
+                    local path = model.path
+                    local stride = math.max(1, math.floor(#path / 32))
+                    for index = 1, #path, stride do
+                        local point = path[index]
+                        local px, py = project(point[1], point[2], point[3], 2)
+                        if px then
+                            rect(px - 1, py - 1, 3, 3, 950, 255, 210, 90)
+                            shown = true
+                        end
+                    end
+                    local ax, ay = project(model.x, model.y, model.z, 0)
+                    if ax then
+                        local arm, thick = 10, 2
+                        local left, right = math.max(0, ax - arm), math.min(width, ax + arm)
+                        local bottom, top = math.max(0, ay - arm), math.min(height, ay + arm)
+                        local band_y, band_x = math.max(0, ay - thick / 2), math.max(0, ax - thick / 2)
+                        rect(left, band_y, right - left, math.min(thick, height - band_y), 950, 255, 210, 90)
+                        rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 950, 255, 210, 90)
+                        shown = true
+                        local radius
+                        local cover = model.definition
+                        if cover and cover.draw_rings and enabled("dots") then
+                            for _, phase in ipairs(cover.phases) do
+                                if phase.outerRadius and phase.outerRadius > 0 then radius = phase.outerRadius end
+                            end
+                        end
+                        if radius then
+                            for step = 0, 11 do
+                                local angle = step * math.pi * 2 / 12
+                                local wx = model.x + math.cos(angle) * radius
+                                local wy = model.y + math.sin(angle) * radius
+                                local qx, qy = project(wx, wy, surface(wx, wy, model.z), 4)
+                                if qx then
+                                    rect(qx - 1, qy - 1, 3, 3, 950, 255, 196, 64)
+                                    shown = true
+                                end
+                            end
+                        end
+                    end
+                    if shown then visible = visible + 1 end
+                else
+                local sx, sy = project(model.x, model.y, surface(model.x, model.y, model.z), 0)
                 local shown = false
                 local def = model.definition
                 local ranged = def.draw_rings and enabled("dots")
@@ -429,11 +496,11 @@ return function(sr, log)
                         if not radius or radius <= 0 then return end
                         local size, red, green, blue = style(kind, def.tint)
                         local function dot(wx, wy, ox, oy)
-                            local dx, dy = project(wx, wy, z0, 4)
+                            local dx, dy = project(wx, wy, surface(wx, wy, z0), 4)
                             if not dx then return end
                             local radial_x, radial_y
                             if boundary == 2 or boundary == 3 then
-                                local cx, cy = project(ox, oy, z0, 4)
+                                local cx, cy = project(ox, oy, surface(ox, oy, z0), 4)
                                 if cx then radial_x, radial_y = dx - cx, dy - cy end
                             end
                             paint(dx, dy, size, red, green, blue, radial_x, radial_y)
@@ -477,7 +544,8 @@ return function(sr, log)
                             if not radius or radius <= 0 then return end
                             local size, red, green, blue = style(kind, def.tint)
                             units(radius, function(ox, oy)
-                                local qx, qy = project(model.x + ox, model.y + oy, model.z, 4)
+                                local qx, qy = project(model.x + ox, model.y + oy,
+                                    surface(model.x + ox, model.y + oy, model.z), 4)
                                 if not qx then return end
                                 local radial_x, radial_y
                                 if boundary == 2 or boundary == 3 then radial_x, radial_y = qx - sx, qy - sy end
@@ -502,6 +570,7 @@ return function(sr, log)
                     end
                 end
                 if shown then visible = visible + 1 end
+                end
                 end
             end
             local function clear_texts()
