@@ -83,7 +83,7 @@ local function right_held()
     return ok and down < 0
 end
 
-local function create_aim(flight, ray)
+local function create_aim(flight, ray, keys)
     assert(type(flight) == 'table' and type(flight.integrate) == 'function', 'beacon flight required')
     assert(type(ray) == 'table' and type(ray.trim) == 'function', 'ground ray required')
 
@@ -98,7 +98,9 @@ local function create_aim(flight, ray)
         local body = closest_body(sr, world, camera)
         if not body then return nil, 'body_unavailable' end
         if not beacon_in_hand(sr, world, body) then return nil, 'holstered' end
-        if not right_held() then return nil, 'not_aiming' end
+        if keys and type(keys.right) == 'function' then
+            if not keys.right() then return nil, 'not_aiming' end
+        elseif not right_held() then return nil, 'not_aiming' end
         if not sr.Unit.has_node(body, 'r_shoulder') then return nil, 'shoulder_unavailable' end
         local shoulder = copy3(sr, sr.Unit.world_position(body, sr.Unit.node(body, 'r_shoulder')))
         if not shoulder then return nil, 'shoulder_unavailable' end
@@ -107,6 +109,7 @@ local function create_aim(flight, ray)
         local hit, path = ray.trim(sr, world, body, points)
         if not hit then return nil, path or 'clear' end
         local flat_x, flat_y = forward[1], forward[2]
+        local flat = math.sqrt(flat_x * flat_x + flat_y * flat_y)
         local model = {
             x = hit[1], y = hit[2], z = hit[3], aim = true,
             origin = shoulder,
@@ -114,7 +117,7 @@ local function create_aim(flight, ray)
         if flat > 1e-4 then
             model.heading = {x = flat_x / flat, y = flat_y / flat}
         end
-        return model
+        return model, nil
     end
 
     return {predict = predict, begin = ray.begin, height = ray.height}

@@ -522,19 +522,21 @@ local function sample(now)
                         end
                         if landed then
                             changed_reason('aim', 'handoff')
-                        elseif definition and definition.draw_rings then
-                            preview.definition = definition
+                        else
                             preview.edge_only = true
-                            local run = definition.runMeters
-                            if preview.heading and type(run) == 'number' and run > 0 and run <= 168 then
-                                preview.axis = preview.heading
-                                preview.runMeters = run
-                                if definition.pattern == 'across' then preview.centered = true end
+                            if definition and definition.draw_rings then
+                                preview.definition = definition
+                                local run = definition.runMeters
+                                if preview.heading and type(run) == 'number' and run > 0 and run <= 168 then
+                                    preview.axis = preview.heading
+                                    preview.runMeters = run
+                                    if definition.pattern == 'across' then preview.centered = true end
+                                end
+                                changed_reason('aim', 'edge')
+                            else
+                                changed_reason('aim', 'cross')
                             end
                             models[#models + 1] = preview
-                            changed_reason('aim', 'edge')
-                        else
-                            changed_reason('aim', 'untyped')
                         end
                     elseif aim_why == 'holstered' then
                         armed = nil

@@ -428,7 +428,7 @@ return function(sr, log)
                 local sx, sy = project(model.x, model.y, surface(model.x, model.y, model.z), 0)
                 local shown = false
                 local def = model.definition
-                local ranged = def.draw_rings and enabled("dots")
+                local ranged = def and def.draw_rings and enabled("dots")
                 local along = ranged and model.axis ~= nil
                 if along then
                     local ux, uy = model.axis.x, model.axis.y
@@ -512,7 +512,7 @@ return function(sr, log)
                         rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 952, 255, 230, 40)
                         shown = true
                     end
-                    if enabled("labels") and not model.edge_only then
+                    if enabled("labels") and def and not model.edge_only then
                         placed[#placed + 1] = {model, sx, sy}
                         shown = true
                     end

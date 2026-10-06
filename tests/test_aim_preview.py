@@ -88,3 +88,64 @@ class AimPreview(unittest.TestCase):
         for index in range(1, len(heights) + 1):
             self.assertAlmostEqual(heights[index], 25, places=3)
         self.assertEqual(harness.temp, 100)
+
+    def test_held_ball_returns_a_landing_and_heading(self):
+        vm = LuaRuntime(unpack_returned_tuples=True)
+        create = vm.execute((ROOT / 'src/aim_preview.lua').read_text(encoding='utf-8'))
+        flight = vm.execute('return {integrate = function() return {{0, 0, 1.6}, {10, 20, 0}} end}')
+        ray = vm.execute('return {trim = function() return {10, 20, 0}, "hit" end, begin = function() end, height = function() end}')
+        aim = create(flight, ray, vm.execute('return {right = function() return true end}'))
+        vm.execute('''
+            body, ball = {}, {}
+            forward = {0, 1, 0}
+            local function vec(x, y, z) return {x = x, y = y, z = z} end
+            sr = {
+                Vector3 = {x = function(v) return v.x end, y = function(v) return v.y end, z = function(v) return v.z end},
+                Matrix4x4 = {
+                    translation = function() return vec(0, 0, 0) end,
+                    forward = function() return vec(forward[1], forward[2], forward[3]) end,
+                    right = function() return vec(1, 0, 0) end,
+                    up = function() return vec(0, 0, 1) end,
+                },
+                IdString64 = {from_hex = function() return "beacon" end},
+                World = {
+                    debug_camera_pose = function() return {} end,
+                    units_by_resource = function(_, resource)
+                        if resource == "content/fac_helldivers/cha_avatar/avatar_helldiver" then return {body} end
+                        return {ball}
+                    end,
+                },
+                Unit = {
+                    alive = function() return true end,
+                    has_node = function() return true end,
+                    node = function(_, name) return name end,
+                    world_position = function(unit, node)
+                        if unit == ball then return vec(0, 0, 1.2) end
+                        if node == "r_shoulder" then return vec(0, 0, 1.6) end
+                        return vec(0, 0, 1.2)
+                    end,
+                },
+            }
+        ''')
+        model, why = aim.predict(vm.globals().sr, True)
+        self.assertIsNone(why)
+        self.assertEqual((model.x, model.y, model.z, model.aim), (10, 20, 0, True))
+        self.assertAlmostEqual(model.heading.x, 0)
+        self.assertAlmostEqual(model.heading.y, 1)
+        vm.execute('forward = {0, 0, 1}')
+        model, why = aim.predict(vm.globals().sr, True)
+        self.assertIsNone(why)
+        self.assertIsNone(model.heading)
+
+    def test_aim_without_a_type_still_draws_the_cross(self):
+        vm = LuaRuntime(unpack_returned_tuples=True)
+        harness = vm.execute((ROOT / 'tests/spatial_engine.lua').read_text(encoding='utf-8'))
+        factory = vm.execute((ROOT / 'src/spatial_renderer.lua').read_text(encoding='utf-8'))
+        renderer = factory(harness.sr)
+        vm.globals().h = harness
+        vm.execute('models = {{x = 0, y = 0, z = 10, aim = true, edge_only = true}} fonts = h.fonts')
+        visible = renderer.draw(vm.globals().models, vm.globals().fonts)
+        self.assertEqual(visible, (True, 1))
+        self.assertGreater(harness.count('rects', 952), 0)
+        self.assertEqual(harness.count('rects', 951), 0)
+        self.assertEqual(harness.count('texts'), 0)
