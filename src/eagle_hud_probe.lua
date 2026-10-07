@@ -52,7 +52,7 @@ end
 local ffi, runtime, game_base, exe_handle, game_handle
 local native_stopped, next_module_check = false, 0
 local reasons = {}
-local references, renderer, renderer_unavailable, aim, armed
+local references, renderer, renderer_unavailable, aim
 local current_models, current_fonts, current_world
 local clear_references
 local function changed_reason(channel, reason)
@@ -145,7 +145,8 @@ local function sample_local_player(rt, base)
             if not avatar then return nil, why end
             local network_id = u32(avatar, 0)
             return {peer = key, seat = seat, entity = entity_id, lifecycle = lifecycle,
-                avatar_network_id = network_id, spawned = lifecycle == 3 and network_id ~= 32767,
+                avatar_network_id = network_id,
+                spawned = lifecycle == 3 and network_id ~= 32767,
                 identity = key .. ':' .. entity_id .. ':' .. network_id .. ':' .. lifecycle}
         end
     end
@@ -332,13 +333,12 @@ clear_references = function()
     end
 end
 local function reset(reason)
-    armed = nil
     clear_references()
     renderer_unavailable = nil
     log('references_cleared', {reason = reason})
 end
 local display = {inner = true, outer = true, shock = true, dots = true, cross = true, labels = true,
-    squad = true, aim = true, mark = 1, samples = 64, range = 120}
+    squad = true, mark = 1, samples = 64, range = 120}
 local option_rows = {
     {key = 'inner', id = 'engle.eagle_hud.inner', kind = 'toggle', default = true, label = 'Full Damage / 满伤内半径',
         description = 'Orange square dots. Full-damage edge. / 橙色范围。代表满伤边界'},
@@ -363,15 +363,13 @@ local option_rows = {
         description = 'Yellow cross on the call point. / 呼叫点上的黄色十字。'},
     {key = 'labels', id = 'engle.eagle_hud.labels', kind = 'toggle', default = true, label = 'Type and Range / 型号与距离注释',
         description = 'Whether to display annotations regarding the range size and lethality indicators. / 是否显示范围大小和致死提示的相关注释。'},
-    {key = 'aim', id = 'engle.eagle_hud.aim', kind = 'toggle', default = true, gap = true, label = 'Aim Landing / 瞄准落点预判',
-        description = 'Hold right mouse with the stratagem ball to show the red damage edge. Releasing it hides the preview. / 拿着战略配备球并按住右键时，只显示红色伤害边界。松开右键后隐藏。'},
 }
 local options_pending = true
 local function apply_profile()
     local profile = rawget(_G, 'EngleEagleHudProfile')
     if type(profile) ~= 'table' then return end
     changed_reason('profile', 'manager')
-    for _, key in ipairs({'inner', 'outer', 'shock', 'dots', 'cross', 'labels', 'squad', 'aim'}) do
+    for _, key in ipairs({'inner', 'outer', 'shock', 'dots', 'cross', 'labels', 'squad'}) do
         if profile[key] == false then display[key] = false end
     end
     local mark = profile.mark
@@ -486,81 +484,6 @@ local function sample(now)
             if calls then attach_throwers(rows, calls) end
             display.avatar = sample_avatar(runtime, game_base, player.avatar_network_id)
             models, why = references.collect(rows)
-            if models then
-                local best, rank
-                for index = 1, #models do
-                    local model = models[index]
-                    local known = model.definition
-                    if known and known.draw_rings and model.aim ~= true then
-                        local mine = display.avatar and model.thrower == display.avatar
-                        local next_rank = mine and 0 or 1
-                        if not rank or next_rank < rank or next_rank == rank then
-                            best, rank = known, next_rank
-                        end
-                    end
-                end
-                if best then armed = best end
-            end
-            if models and world and #models < 16 then
-                if display.aim == false then
-                    changed_reason('aim', 'off')
-                elseif aim then
-                    local ok, preview, aim_why = pcall(aim.predict, rawget(_G, 'stingray'), world)
-                    if not ok then
-                        changed_reason('aim', 'unavailable:' .. tostring(preview))
-                    elseif preview then
-                        local definition = armed
-                        local origin = preview.origin
-                        if origin then
-                            local best, best_score
-                            for index = 1, #models do
-                                local model = models[index]
-                                if model.definition then
-                                    local dx = model.x - origin[1]
-                                    local dy = model.y - origin[2]
-                                    local dz = model.z - origin[3]
-                                    local distance = math.sqrt(dx * dx + dy * dy + dz * dz)
-                                    local mine = display.avatar and model.thrower == display.avatar
-                                    if mine or distance <= 12 then
-                                        local score = distance + (mine and 0 or 50)
-                                        if not best_score or score < best_score then
-                                            best, best_score = model.definition, score
-                                        end
-                                    end
-                                end
-                            end
-                            if best then definition, armed = best, best end
-                        end
-                        local landed = false
-                        for index = 1, #models do
-                            local dx, dy = models[index].x - preview.x, models[index].y - preview.y
-                            if dx * dx + dy * dy <= 36 then landed = true; break end
-                        end
-                        if landed then
-                            changed_reason('aim', 'handoff')
-                        else
-                            preview.edge_only = true
-                            if definition and definition.draw_rings then
-                                preview.definition = definition
-                                local run = definition.runMeters
-                                if preview.heading and type(run) == 'number' and run > 0 and run <= 168 then
-                                    preview.axis = preview.heading
-                                    preview.runMeters = run
-                                    if definition.pattern == 'across' then preview.centered = true end
-                                end
-                                changed_reason('aim', 'edge:' .. tostring(definition.name))
-                            else
-                                changed_reason('aim', 'cross:no_type')
-                            end
-                            models[#models + 1] = preview
-                        end
-                    elseif aim_why == 'holstered' then
-                        changed_reason('aim', 'holstered')
-                    else
-                        changed_reason('aim', tostring(aim_why or 'idle'))
-                    end
-                end
-            end
         end
         if not models then
             clear_references()

@@ -50,10 +50,6 @@ TOGGLES = (
      'Off hides a call whose comms owner is another avatar. A call with no comms owner still stops at 80 m.',
      '关掉后，队友丢出的飞鹰信标将不再绘制。如果无法确认是否为队友信标，则回退为离当前视角超过80米的不画。',
      'no_squad', 96, 'squad'),
-    ('Aim Landing', '瞄准落点预判',
-     'Hold right mouse with the stratagem ball to show the red damage edge. Releasing it hides the preview.',
-     '拿着战略配备球并按住右键时，只显示红色伤害边界。松开右键后隐藏。',
-     'no_aim', 103, 'aim'),
 )
 STYLES = (
     ('Square', '方点', None, None, None),

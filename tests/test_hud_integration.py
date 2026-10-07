@@ -271,9 +271,6 @@ class SpatialHudIntegration(unittest.TestCase):
         self.assertEqual(vm.eval('option_specs["engle.eagle_hud.inner"].mod'), 'Eagle HUD Reference / 飞鹰参考')
         self.assertEqual(vm.eval('option_specs["engle.eagle_hud.inner"].label'), 'Full Damage / 满伤内半径')
         self.assertTrue(vm.eval('option_specs["engle.eagle_hud.dots"].gap'))
-        self.assertEqual(vm.eval('option_specs["engle.eagle_hud.aim"].label'), 'Aim Landing / 瞄准落点预判')
-        self.assertTrue(vm.eval('option_specs["engle.eagle_hud.aim"].default'))
-        self.assertTrue(vm.eval('option_specs["engle.eagle_hud.aim"].gap'))
         self.assertEqual(vm.eval('option_specs["engle.eagle_hud.mark"].type'), 'choice')
         self.assertEqual(vm.eval('option_specs["engle.eagle_hud.mark"].choices[2]'), 'Dash / 短划线')
         self.assertEqual(vm.eval('option_specs["engle.eagle_hud.samples"].min'), 8)
@@ -358,6 +355,8 @@ class SpatialHudIntegration(unittest.TestCase):
         self.assertEqual(e.count('rects', 951), before)
         n.tick(0.01)
         self.assertEqual(len(self.records(n, 'options_status')), 1)
+
+
 
 
 if __name__ == '__main__':
