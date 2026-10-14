@@ -163,6 +163,11 @@ return function(sr, log)
                 assert(finite(model.runMeters) and model.runMeters > 0 and model.runMeters <= 168, "run_invalid")
                 if model.centered ~= nil then assert(model.centered == true, "centered_invalid") end
             end
+            if model.track_x ~= nil or model.track_y ~= nil then
+                assert(finite(model.track_x) and finite(model.track_y)
+                    and math.abs(model.track_x) <= 100000 and math.abs(model.track_y) <= 100000,
+                    "track_invalid")
+            end
             end
         end
     end
@@ -414,6 +419,55 @@ return function(sr, log)
             local known_avatar = type(avatar) == "number" and avatar > 0 and avatar < 4294967296
                 and avatar == math.floor(avatar)
             local squad_on = enabled("squad")
+            local function mark(wx, wy, z, size, layer)
+                local qx, qy = project(wx, wy, surface(wx, wy, z), 0)
+                if not qx then return false end
+                local x = math.max(0, math.min(qx - size / 2, width - size))
+                local y = math.max(0, math.min(qy - size / 2, height - size))
+                rect(x, y, math.min(size, width - x), math.min(size, height - y), layer, 90, 210, 255)
+                return true
+            end
+            local function ground_arrow(ax, ay, z, ux, uy, length)
+                local side_x, side_y = -uy, ux
+                local drew = false
+                local t = 0
+                while t < length - 14 do
+                    if mark(ax + ux * t, ay + uy * t, z, 12, 950) then drew = true end
+                    t = t + 3
+                end
+                local span = 0
+                while span <= 14 do
+                    local back = 14 - span
+                    local spread = span / 14 * 10
+                    local bx = ax + ux * (length - back)
+                    local by = ay + uy * (length - back)
+                    if mark(bx, by, z, span < 2 and 22 or 14, 950) then drew = true end
+                    if spread >= 2 then
+                        if mark(bx + side_x * spread, by + side_y * spread, z, 14, 950) then drew = true end
+                        if mark(bx - side_x * spread, by - side_y * spread, z, 14, 950) then drew = true end
+                    end
+                    span = span + 2
+                end
+                return drew
+            end
+            local function ground_cross(wx, wy, z)
+                local qx, qy = project(wx, wy, surface(wx, wy, z), 0)
+                if not qx then return false end
+                local arm, thick = 28, 8
+                local left, right = math.max(0, qx - arm), math.min(width, qx + arm)
+                local bottom, top = math.max(0, qy - arm), math.min(height, qy + arm)
+                local band_y, band_x = math.max(0, qy - thick / 2), math.max(0, qx - thick / 2)
+                local drew = false
+                if right > left and band_y < height then
+                    rect(left, band_y, right - left, math.min(thick, height - band_y), 949, 90, 210, 255)
+                    drew = true
+                end
+                if top > bottom and band_x < width then
+                    rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 949, 90, 210, 255)
+                    drew = true
+                end
+                return drew
+            end
             for _, model in ipairs(models) do
                 local thrower = model.thrower
                 local owned = type(thrower) == "number" and thrower > 0 and thrower < 4294967296
@@ -428,6 +482,8 @@ return function(sr, log)
                 local sx, sy = project(model.x, model.y, surface(model.x, model.y, model.z), 0)
                 local shown = false
                 local def = model.definition
+                local ox, oy = model.x, model.y
+                if finite(model.track_x) and finite(model.track_y) then ox, oy = model.track_x, model.track_y end
                 local ranged = def and def.draw_rings and enabled("dots")
                 local along = ranged and model.axis ~= nil
                 if along then
@@ -435,11 +491,11 @@ return function(sr, log)
                     local px, py = -uy, ux
                     local run = model.runMeters
                     local half = model.centered and run / 2 or 0
-                    local x0 = model.x - ux * half
-                    local y0 = model.y - uy * half
+                    local x0 = ox - ux * half
+                    local y0 = oy - uy * half
                     local z0 = model.z
-                    local x1 = model.x + ux * (run - half)
-                    local y1 = model.y + uy * (run - half)
+                    local x1 = ox + ux * (run - half)
+                    local y1 = oy + uy * (run - half)
                     local function outline(radius, kind)
                         if not radius or radius <= 0 then return end
                         local size, red, green, blue = style(kind, def.tint)
@@ -458,7 +514,7 @@ return function(sr, log)
                             local step = run / (def.bursts - 1)
                             for index = 0, def.bursts - 1 do
                                 local along_m = -half + index * step
-                                local bx, by = model.x + ux * along_m, model.y + uy * along_m
+                                local bx, by = ox + ux * along_m, oy + uy * along_m
                                 units(radius, function(ox, oy)
                                     dot(bx + ox, by + oy, bx, by)
                                 end)
@@ -512,12 +568,40 @@ return function(sr, log)
                         rect(band_x, bottom, math.min(thick, width - band_x), top - bottom, 952, 255, 230, 40)
                         shown = true
                     end
+                    if model.jet_heading == true and type(model.axis) == "table"
+                        and finite(model.axis.x) and finite(model.axis.y)
+                        and finite(model.runMeters) and model.runMeters > 0 then
+                        local ux, uy = model.axis.x, model.axis.y
+                        local half = model.centered and model.runMeters / 2 or 0
+                        if ground_arrow(ox - ux * half, oy - uy * half, model.z, ux, uy, model.runMeters) then
+                            shown = true
+                        end
+                    end
                     if enabled("labels") and def and not model.edge_only then
                         placed[#placed + 1] = {model, sx, sy}
                         shown = true
                     end
                 end
                 if shown then visible = visible + 1 end
+                end
+            end
+            local aircraft = options and options.aircraft
+            if type(aircraft) == "table" then
+                local jet_reach = math.max(reach, 400)
+                if jet_reach > 800 then jet_reach = 800 end
+                for index = 1, #aircraft do
+                    local jet = aircraft[index]
+                    if type(jet) == "table" and finite(jet.x) and finite(jet.y) and finite(jet.z) then
+                        local dx, dy = jet.x - cx, jet.y - cy
+                        if dx * dx + dy * dy <= jet_reach * jet_reach then
+                            local drew = ground_cross(jet.x, jet.y, jet.z)
+                            if finite(jet.fx) and finite(jet.fy)
+                                and ground_arrow(jet.x, jet.y, jet.z, jet.fx, jet.fy, 28) then
+                                drew = true
+                            end
+                            if drew then visible = visible + 1 end
+                        end
+                    end
                 end
             end
             local function clear_texts()

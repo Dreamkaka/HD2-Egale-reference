@@ -132,4 +132,60 @@ end
 h.fail_fonts=function(fail)h.unreadable=fail and base+0x3772268 or nil end
 h.fail_active=function(fail)h.unreadable=fail and 0x26100000 or nil end
 h.fail_state=function(fail)h.unreadable=fail and 0x20000000+705052 or nil end
+h.plant_jet=function(x,y,z,fx,fy,fz)
+    local method=base+2873456
+    local code=block(method,8)
+    code[0],code[1],code[2],code[3],code[4]=0x48,0x8D,0x41,0x60,0xC3
+    local registry=0x31000000
+    global(27328752, registry)
+    local reg=block(registry,168)
+    u32(reg,152,2)
+    local gens=0x31100000
+    u64(reg,160,gens)
+    local genb=block(gens,2)
+    genb[0],genb[1]=0,0
+    local objs=0x31200000
+    u64(reg,136,objs)
+    local objarr=block(objs,16)
+    local object=0x32000000
+    u64(objarr,8,object)
+    local unit=block(object,160)
+    local vtable=0x32100000
+    u64(unit,0,vtable)
+    u32(unit,8,1)
+    local vt=block(vtable,0xF0)
+    u64(vt,0xE8,method)
+    local poses=0x32200000
+    u64(unit,136,poses)
+    local pose=block(poses,64)
+    f32(pose,0,0);f32(pose,4,1);f32(pose,8,0)
+    f32(pose,16,fx);f32(pose,20,fy);f32(pose,24,fz)
+    f32(pose,32,0);f32(pose,36,0);f32(pose,40,1)
+    f32(pose,48,x);f32(pose,52,y);f32(pose,56,z)
+    local manager=0x33000000
+    global(54968216, manager)
+    local header=block(manager+15838896,20)
+    local buckets=0x33100000
+    u64(header,0,buckets)
+    u32(header,8,2);u32(header,12,0xffffffff);u32(header,16,1)
+    local map=block(buckets,16)
+    u32(map,0,8);u32(map,4,0);u32(map,8,0xffffffff)
+    local desc=block(manager+15937304,24)
+    u32(desc,8,8);u32(desc,12,1)
+    local eagle=0x34000000
+    global(53634640, eagle)
+    local em=block(eagle,80)
+    u32(em,28,1)
+    local handles=0x34100000
+    u64(em,72,handles)
+    local hlist=block(handles,8)
+    local handle=0x34200000
+    u64(hlist,0,handle)
+    local hs=block(handle,24)
+    u32(hs,0,0xDD4383EC);u32(hs,4,0x23A60681);u32(hs,8,8);u32(hs,16,1)
+end
+h.break_scene=function()
+    local code=block(base+2873456,8)
+    code[0]=0
+end
 return h

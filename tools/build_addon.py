@@ -141,6 +141,7 @@ def compose_source():
     recipes = chunk('src/ray_recipes.lua')
     ray = chunk('src/ground_ray.lua')
     preview = chunk('src/aim_preview.lua')
+    jets = chunk('src/eagle_jets.lua')
     spec = importlib.util.spec_from_file_location('engle_catalog', ROOT / 'tools/eagle_catalog.py')
     normalizer = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(normalizer)
@@ -160,8 +161,9 @@ def compose_source():
             + 'local create_aim = (function()\n' + preview + '\nend)()\n'
             + 'return function() return create_aim(flight, create_ray(recipes)) end\n'
             + 'end)()\n'
+            + 'local create_jets = (function()\n' + jets + '\nend)()\n'
             + 'return (function(...)\n' + probe[len(marker):]
-            + '\nend)(create_reader, create_renderer, create_references, catalog, create_aim_preview)\n'
+            + '\nend)(create_reader, create_renderer, create_references, catalog, create_aim_preview, create_jets)\n'
             ).encode('utf-8')
 
 

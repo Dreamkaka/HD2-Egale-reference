@@ -1,7 +1,8 @@
 -- HD2-Addon: mods/engle/eagle_hud_probe
--- Current-record spatial references, not predicted bomb impacts or persistent sortie identities.
+-- Current-record spatial references. A uniquely matched Eagle jet can replace
+-- the anchor axis and is drawn itself. Radii stay on the call, not on the jet.
 -- The build embeds the independent reader, renderer, collector and baseline catalog.
-local create_readonly_runtime, create_renderer, create_references, catalog, create_aim_preview = ...
+local create_readonly_runtime, create_renderer, create_references, catalog, create_aim_preview, create_jets = ...
 local existing = rawget(_G, 'EngleEagleHudProbe')
 if existing then return existing end
 local state = {status = 'initializing', sequence = 0, frame = 0, mission = false, epoch = 0, game_time = 0}
@@ -49,10 +50,10 @@ local function log(kind, data)
     -- Without a file, report setup/errors only; never flood the shared engine log.
     if kind == 'stopped' or kind == 'initialized' then fallback(line) end
 end
-local ffi, runtime, game_base, exe_handle, game_handle
+local ffi, runtime, game_base, exe_base, exe_handle, game_handle
 local native_stopped, next_module_check = false, 0
 local reasons = {}
-local references, renderer, renderer_unavailable, aim
+local references, renderer, renderer_unavailable, aim, jets, draw_options
 local current_models, current_fonts, current_world
 local clear_references
 local function changed_reason(channel, reason)
@@ -298,7 +299,7 @@ local function ensure_modules(now)
     local ok, why = pcall(function()
         local exe, game = runtime.module('helldivers2.exe'), runtime.module('game.dll')
         if exe == nil or game == nil then
-            game_base, exe_handle, game_handle = nil, nil, nil
+            game_base, exe_base, exe_handle, game_handle = nil, nil, nil, nil
             next_module_check = now + 5
             state.status = 'waiting_for_modules'
             clear_references()
@@ -306,7 +307,7 @@ local function ensure_modules(now)
             return
         end
         if exe ~= exe_handle or game ~= game_handle then
-            game_base = nil
+            game_base, exe_base = nil, nil
             local exehash, exe_error = runtime.module_hash(exe)
             assert(exehash, 'EXE_HASH_UNAVAILABLE:' .. tostring(exe_error))
             local gamehash, game_error = runtime.module_hash(game)
@@ -314,7 +315,9 @@ local function ensure_modules(now)
             log('module_hashes', {exe = exehash, game = gamehash})
             assert(exehash == EXE and gamehash == GAME, 'UNSUPPORTED_BUILD')
             game_base = runtime.address(game)
+            exe_base = runtime.address(exe)
             assert(type(game_base) == 'number' and game_base >= 65536, 'invalid_game_base')
+            assert(type(exe_base) == 'number' and exe_base >= 65536, 'invalid_exe_base')
             exe_handle, game_handle = exe, game
             changed_reason('modules', 'fingerprints_verified')
             state.status = 'observing'
@@ -325,6 +328,7 @@ local function ensure_modules(now)
 end
 clear_references = function()
     current_models, current_fonts, current_world = nil, nil, nil
+    if draw_options then draw_options.aircraft = nil end
     if renderer then
         local ok, cleared, why = pcall(renderer.clear)
         if not ok or not cleared then
@@ -414,7 +418,7 @@ local function sync_options()
         if usable then display[row.key] = value end
     end
 end
-local draw_options = setmetatable({}, {__index = display})
+draw_options = setmetatable({}, {__index = display})
 local function draw_references()
     if not current_models or #current_models == 0 or not current_fonts then return end
     if not renderer then
@@ -484,6 +488,33 @@ local function sample(now)
             if calls then attach_throwers(rows, calls) end
             display.avatar = sample_avatar(runtime, game_base, player.avatar_network_id)
             models, why = references.collect(rows)
+            if models and jets and exe_base then
+                local aircraft, jet_why = jets.sample({
+                    game = game_base, exe = exe_base,
+                    pointer = function(address) return (pointer(runtime, address, 'jet_ptr')) end,
+                    u32 = function(address)
+                        local bytes = read_buffer(runtime, 'jet_u32', address, 4, 4)
+                        return bytes and u32(bytes, 0) or nil
+                    end,
+                    u64hex = function(address)
+                        local bytes = read_buffer(runtime, 'jet_u64', address, 8, 8)
+                        return bytes and u64hex(bytes, 0) or nil
+                    end,
+                    bytes = function(address, size)
+                        if type(size) ~= 'number' or size < 1 or size > 64 then return nil end
+                        local bytes = read_buffer(runtime, 'jet_bytes', address, size, 64)
+                        return bytes and ffi.string(bytes, size) or nil
+                    end,
+                })
+                if not aircraft then
+                    draw_options.aircraft = nil
+                    changed_reason('jets', 'unavailable:' .. tostring(jet_why))
+                else
+                    local matched = jets.apply(models, aircraft)
+                    draw_options.aircraft = aircraft
+                    changed_reason('jets', tostring(#aircraft) .. ':matched:' .. tostring(matched))
+                end
+            end
         end
         if not models then
             clear_references()
@@ -535,6 +566,13 @@ local ok, why = pcall(function()
         local created_ok, created = pcall(create_aim_preview)
         if created_ok and type(created) == 'table' and type(created.predict) == 'function' then
             aim = created
+        end
+    end
+    if type(create_jets) == 'function' then
+        local created_ok, created = pcall(create_jets)
+        if created_ok and type(created) == 'table' and type(created.sample) == 'function'
+            and type(created.apply) == 'function' then
+            jets = created
         end
     end
     local previous_update = rawget(_G, 'update')

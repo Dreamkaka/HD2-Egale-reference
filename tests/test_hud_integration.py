@@ -19,6 +19,7 @@ ENGINE = (ROOT / 'tests/spatial_engine.lua').read_text(encoding='utf-8')
 CONTROLLER = (ROOT / 'src/eagle_hud_probe.lua').read_text(encoding='utf-8')
 RENDERER = (ROOT / 'src/spatial_renderer.lua').read_text(encoding='utf-8')
 COLLECTOR = (ROOT / 'src/eagle_references.lua').read_text(encoding='utf-8')
+JETS = (ROOT / 'src/eagle_jets.lua').read_text(encoding='utf-8')
 
 
 class SpatialHudIntegration(unittest.TestCase):
@@ -32,7 +33,8 @@ class SpatialHudIntegration(unittest.TestCase):
         if setup:
             vm.execute(setup)
         state = vm.execute(CONTROLLER, native.factory, vm.execute(RENDERER),
-                           vm.execute(COLLECTOR), vm.execute('return ' + CATALOG))
+                           vm.execute(COLLECTOR), vm.execute('return ' + CATALOG),
+                           None, vm.execute(JETS))
         native.tick()
         return vm, native, engine, state
 
@@ -355,6 +357,76 @@ class SpatialHudIntegration(unittest.TestCase):
         self.assertEqual(e.count('rects', 951), before)
         n.tick(0.01)
         self.assertEqual(len(self.records(n, 'options_status')), 1)
+
+    def test_one_strafing_jet_turns_the_corridor_along_its_nose(self):
+        vm, n, e, _ = self.start('''
+            native_fixture.set_row(0, 30, 0, 0, 3)
+            native_fixture.plant_jet(-40, 0, 8, 1, 0, 0)
+        ''')
+        self.assertEqual(self.records(n, 'jets_status')[-1]['data']['reason'], '1:matched:1')
+        self.assertGreater(e.count('rects', 950), 0)
+        self.assertTrue(vm.eval('''(function()
+            local east, north, ahead, jet = false, false, false, false
+            for _, r in pairs(engine_fixture.gui.rects) do
+                if r.position[3] == 951 and r.color[2] == 255 and r.color[3] == 48 then
+                    local x = (r.position[1] + r.size[1] / 2 - 960) / 10
+                    local y = (r.position[2] + r.size[2] / 2 - 540) / 10
+                    if x > 40 then east = true end
+                    if y > 8 then north = true end
+                end
+                if r.position[3] == 950 and r.color[2] == 90 and r.size[1] >= 14 then
+                    local x = (r.position[1] + r.size[1] / 2 - 960) / 10
+                    if x > 20 then ahead = true end
+                end
+                if r.position[3] == 949 and r.color[2] == 90 then
+                    local x = (r.position[1] + r.size[1] / 2 - 960) / 10
+                    local y = (r.position[2] + r.size[2] / 2 - 540) / 10
+                    if math.abs(x + 40) < 3 and math.abs(y) < 3 then jet = true end
+                end
+            end
+            return east and not north and ahead and jet
+        end)()'''))
+
+    def test_an_off_track_call_keeps_its_cross_and_moves_the_run(self):
+        vm, n, e, _ = self.start('''
+            native_fixture.set_row(0, 30, 0, 20, 3)
+            native_fixture.plant_jet(-40, 0, 8, 1, 0, 0)
+        ''')
+        self.assertEqual(self.records(n, 'jets_status')[-1]['data']['reason'], '1:matched:1')
+        self.assertTrue(vm.eval('''(function()
+            local on_track, on_call, cross_at_call = false, false, false
+            for _, r in pairs(engine_fixture.gui.rects) do
+                local x = (r.position[1] + r.size[1] / 2 - 960) / 10
+                local y = (r.position[2] + r.size[2] / 2 - 540) / 10
+                if r.position[3] == 951 and r.color[2] == 255 and r.color[3] == 48 then
+                    if x > 20 and math.abs(y) < 6 then on_track = true end
+                    if y > 12 then on_call = true end
+                end
+                if r.position[3] == 952 and math.abs(x) < 2 and math.abs(y - 20) < 2 then
+                    cross_at_call = true
+                end
+            end
+            return on_track and not on_call and cross_at_call
+        end)()'''))
+
+    def test_a_changed_scene_graph_does_not_turn_the_corridor(self):
+        vm, n, e, _ = self.start('''
+            native_fixture.set_row(0, 30, 0, 0, 3)
+            native_fixture.plant_jet(-40, 0, 8, 1, 0, 0)
+            native_fixture.break_scene()
+        ''')
+        self.assertEqual(self.records(n, 'jets_status')[-1]['data']['reason'],
+                         'unavailable:scene_graph_unproven')
+        self.assertEqual(e.count('rects', 950), 0)
+        self.assertFalse(vm.eval('''(function()
+            for _, r in pairs(engine_fixture.gui.rects) do
+                if r.position[3] == 951 and r.color[2] == 255 and r.color[3] == 48 then
+                    local x = (r.position[1] + r.size[1] / 2 - 960) / 10
+                    if x > 40 then return true end
+                end
+            end
+            return false
+        end)()'''))
 
 
 
